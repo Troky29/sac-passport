@@ -1,0 +1,5 @@
+.vscode
+__pychache__
+docs
+env
+key.json

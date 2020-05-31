@@ -1,0 +1,43 @@
+<html>
+    <head>
+        <title>Result Page</title>
+    </head>
+    <body>
+        <h2>Indentity Docuemnt:</h2><br>
+        <img src="{{url_for('send_image', folder=folder, filename=filename)}}" height="400"><br>
+
+        <form method="GET" action="{{url_for('clear_id', folder=folder, filename=filename, photo=photo)}}">
+            <input type="submit" value="Try again?">
+        </form>
+        <br>
+        {{ message }}<br>
+        <form method="POST">
+            {{ identityform.csrf_token }}
+            {{ identityform.municipality.label }}
+            {{ identityform.municipality }}<br>
+            {{ identityform.surname.label }}
+            {{ identityform.surname }}<br>
+            {{ identityform.name.label }}
+            {{ identityform.name }}<br>
+            {{ identityform.place_of_birth.label }}
+            {{ identityform.place_of_birth }}<br>
+            {{ identityform.province_of_birth.label }}
+            {{ identityform.province_of_birth }}<br>
+            {{ identityform.date_of_birth.label }}
+            {{ identityform.date_of_birth }}<br>
+            {{ identityform.sex.label }}
+            {{ identityform.sex }}<br>
+            {{ identityform.height.label }}
+            {{ identityform.height }}<br>
+            {{ identityform.nationality.label }}
+            {{ identityform.nationality }}<br>
+            {{ identityform.issuing.label }}
+            {{ identityform.issuing }}<br>
+            {{ identityform.expiry.label }}
+            {{ identityform.expiry }}<br>
+            
+            <input type="submit" value="Submit">
+        </form>
+        
+    </body>
+</html>

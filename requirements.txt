@@ -1,0 +1,6 @@
+FLASK-WTF
+flask
+google-cloud-vision
+google-cloud-storage
+Pillow
+opencv-python
