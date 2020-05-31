@@ -5,9 +5,13 @@ from wtforms import StringField, IntegerField, DateField
 from wtforms.validators import DataRequired
 from werkzeug.utils import secure_filename
 from uuid import uuid4
+import sys
+import os
+import io
+import pdf2image
 from storage import Storage
 from vision import Vision
-import sys
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secret'
@@ -45,41 +49,58 @@ def upload_single():
     filename = ''
     if imageform.validate_on_submit():
         img = imageform.img.data
+        _, extension = os.path.splitext(img.filename)
+
         filename = secure_filename(str(uuid4()))
         path = f'{DOCUMENT_FOLDER}/{filename}/original'
         content = img.read()
-        if sys.getsizeof(content) > MAX_CONTENT_LENGHT:
-            imageform.img.errors = ["File too big (max 20MB)"]
-        else:
-            storage_util.upload_document(content, path)
+        
+        if sys.getsizeof(content) < MAX_CONTENT_LENGHT:
+            if extension == '.pdf':
+                page = pdf2image.convert_from_bytes(content)
+                f = io.BytesIO()
+                page[0].save(f, 'JPEG')
+                storage_util.upload_document(f.getvalue(), path)
+            else:
+                storage_util.upload_document(content, path)
             return redirect(url_for('review_single', filename=filename))
+        else:
+            imageform.img.errors = ["File too big (max 20MB)"]
+
     return render_template('upload.html', imageform=imageform)
 
-@app.route('/single/<filename>')
+@app.route('/single/<filename>', methods=['GET'])
 def review_single(filename):
     path = f'{DOCUMENT_FOLDER}/{filename}/original'
     edit = f'{DOCUMENT_FOLDER}/{filename}/edited'
     photo = f'{DOCUMENT_FOLDER}/{filename}/photo'
+    messages = ['Label not found, probaly not a passport']
 
-    if storage_util.check_document(path):
+    if storage_util.check_document(path) and not storage_util.check_document(edit):
 
         faces, labels = vision_util.detect_document(path, edit)
         if faces == 0:
+            storage_util.delete_document(f'{DOCUMENT_FOLDER}/{filename}')
             return 'No faces found, probably not a passport'
 
-        if labels is None:
-            return 'Label not found, probaly not a passport'
+        for label in labels:
+            if label.description == 'Identity document':
+                messages.clear()
+                messages.append(f'Found correct label with score: {label.score}')
+                break
+
+            messages.append(f'Found label {label.description} with score: {label.score}')
 
         content = storage_util.get_document(edit)
         person = vision_util.detect_person(content, photo)
         if person == 0:
             face = vision_util.crop_face(content, photo)
+            print(face)
 
-        content = storage_util.get_document(path)
-        fields = vision_util.detect_text(content)
-        # print(edit_text, original_text)
+        # content = storage_util.get_document(path)
+        fields = vision_util.detect_text(edit)
         
-    return render_template('results.html', filename=filename, original = 'original', edited = 'edited', photo = 'photo', fields=fields)
+    return render_template('results.html', filename=filename, original = 'original', edited = 'edited', photo = 'photo', fields=fields, messages=messages)
 
 @app.route('/', methods=['GET'])
 def index():
@@ -199,7 +220,8 @@ def send_image(filename, document):
 @app.route('/clean/<filename>')
 def clear_image(filename):
     path = f'{DOCUMENT_FOLDER}/{filename}'
-    storage_util.delete_document(path)
+    images = ['/original', '/edited', '/photo', '']
+    for image in images: storage_util.delete_document(path+image)
     return redirect(url_for('upload_single'))
 
 # @app.route('/clean/<folder>/<filename>/<photo>')

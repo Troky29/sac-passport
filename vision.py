@@ -37,10 +37,7 @@ class Vision(object):
         response = client.label_detection(image=image)
         labels = response.label_annotations
         
-        for label in labels:
-            if label.description == 'Identity document':
-                return label.score
-        return None
+        return labels
 
     def crop_document(self, content, roll, dest):
         source = np.asarray(bytearray(content), np.uint8)
@@ -74,8 +71,15 @@ class Vision(object):
         out = Image.fromarray(cropped)
         form = Image.open(io.BytesIO(content)).format
 
-        if abs(roll) > 5:
-            out = out.rotate(roll, expand=True, fillcolor='white')
+        if abs(roll) > 6:
+            if abs(roll-90) < 5:
+                out = out.rotate(90, expand=True, fillcolor='white')
+            elif abs(roll+90) < 5:
+                out = out.rotate(-90, expand=True, fillcolor='white')
+            elif abs(roll-180) < 5 or abs(roll+180) < 5:
+                out = out.rotate(180, expand=True, fillcolor='white')
+            else:
+                out = out.rotate(roll, expand=True, fillcolor='white')
 
         f = io.BytesIO()
         out.save(f, format=form)
@@ -119,7 +123,6 @@ class Vision(object):
         storage_util.upload_document(f.getvalue(), dest)
 
     def crop_face(self, content, dest):
-        # content = storage_util.get_document(path)
         image = vision.types.Image(content=content)
         response = client.face_detection(image=image)
         faces = response.face_annotations
@@ -150,7 +153,8 @@ class Vision(object):
 
         return face_num
     
-    def detect_text(self, content):
+    def detect_text(self, path):
+        content = storage_util.get_document(path)
         image = vision.types.Image(content=content)
         response = client.document_text_detection(image=image)
         document = response.full_text_annotation
@@ -159,7 +163,7 @@ class Vision(object):
             'code of issuing state',
             'passport no',
             'surname',
-            'given names',
+            'given name',
             'nationality',
             'date of birth',
             'sex',
@@ -168,7 +172,8 @@ class Vision(object):
             'authority',
             'date of expiry',
             'country code',
-            'personal no']
+            'personal no',
+            'issued by']
 
         doc_words = []
         doc_lines = []
@@ -226,7 +231,7 @@ class Vision(object):
         for i in range(len(doc_fields)):
             x1 = doc_fields[i]['start'].x
             y1 = doc_fields[i]['start'].y
-            best = 300
+            best = 150
             result = ''
             dist = 0
             for line in doc_lines:
@@ -234,18 +239,20 @@ class Vision(object):
                 y2 = line['words'][0]['start'].y
                 x3 = line['words'][-1]['end'].x
                 dist = cv2.norm((x1, y1), (x2, y2))
-                if dist < best and 0< y2 - y1 < 100 and x3 > x1:
+                if dist < best and 0< y2 - y1 < 50 and x3 > x1:
                     
                     if i < len(doc_fields) - 1:
 
                         field_vertical_distance = abs(doc_fields[i]['end'].y - doc_fields[i+1]['start'].y)
-
-                        if field_vertical_distance < 50 and x3 > doc_fields[i+1]['start'].x:
+                        
+                        if field_vertical_distance < 40 and x3 > doc_fields[i+1]['start'].x:
                             for k in range(1, len(line['words'])):
-                                if line['words'][-k]['end'].x > doc_fields[i+1]['start'].x:
-                                    doc_lines.append({'text':''.join(line['text'].split()[-k:]), 'words':line['words'][-k:]})
+                                next_field = doc_fields[i+1]['start'].x
+                                if line['words'][-k]['end'].x > next_field and line['words'][-k-1]['end'].x < next_field:
+                                    doc_lines.append({'text':' '.join(line['text'].split()[-k:]), 'words':line['words'][-k:]})
                                     line['words'] = line['words'][:-k]
                                     line['text'] = ' '.join(line['text'].split()[:-k])
+                                    break
 
                     result = line['text']
                     best = dist
@@ -267,17 +274,16 @@ class Vision(object):
         for line in sorted_lines[-2:]:
             line['words'] = sorted(line['words'], key=lambda k: k['start'].x)
             for word in line['words']: barcode += word['word'].strip()
-            print(barcode, '\n')
         
         response.append({'field':'barcode', 'value':re.sub("[^0-9A-Z]", "<", barcode)})
 
         return response
 
 if __name__ == "__main__":
-    path = f'document/93300e60-681c-4122-906b-57b846ee350a/original'
-    edited = f'document/93300e60-681c-4122-906b-57b846ee350a/edited'
-    content = storage_util.get_document(edited)
-    ret = Vision().detect_text(content)
+    path = f'document/8656d09f-d942-49ec-aac2-aabcda7994de/original'
+    edited = f'document/8656d09f-d942-49ec-aac2-aabcda7994de/edited'
+    # content = storage_util.get_document(edited)
+    ret = Vision().detect_text(edited)
     print(ret)
 
     def process_document(self, path):

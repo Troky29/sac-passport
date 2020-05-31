@@ -3,6 +3,9 @@
         <title>Result Page</title>
     </head>
     <body>
+        {% for message in messages %}
+            {{ message }}<br>
+        {% endfor %}
         <h2>Original image:</h2><br>
         <img src="{{url_for('send_image', filename=filename, document = original)}}" height="200"><br>
         <h2>Edited image:</h2>
@@ -12,7 +15,7 @@
         {% endfor %}
         <h2>Person photo:</h2>
         <img src="{{url_for('send_image', filename=filename, document = photo)}}" height="200"><br>
-        <form method="GET" action="{{url_for('clear_image', folder=folder, filename=filename)}}">
+        <form method="GET" action="{{url_for('clear_image', filename=filename)}}">
             <input type="submit" value="Try again?">
         </form>
         <br>
