@@ -11,12 +11,15 @@ import io
 import pdf2image
 from storage import Storage
 from vision import Vision
+from requests import get, post
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secret'
 DOCUMENT_FOLDER = 'document'
 MAX_CONTENT_LENGHT = 20 * 1024 * 1024 #20 MB max image dimension
 ALLOWED_EXTENSIONS = ['jpg', 'png', 'jpeg', 'pdf']
+basePath = 'https://127.0.0.1:5000/api/v1'
+
 storage_util = Storage()
 vision_util = Vision()
 
@@ -63,35 +66,53 @@ def upload_single():
 
 @app.route('/single/<filename>', methods=['GET'])
 def review_single(filename):
-    path = f'{DOCUMENT_FOLDER}/{filename}/original'
-    edit = f'{DOCUMENT_FOLDER}/{filename}/edited'
-    photo = f'{DOCUMENT_FOLDER}/{filename}/photo'
+    # path = f'{DOCUMENT_FOLDER}/{filename}/original'
+    # edit = f'{DOCUMENT_FOLDER}/{filename}/edited'
+    # photo = f'{DOCUMENT_FOLDER}/{filename}/photo'
     messages = ['Label not found, probaly not a passport']
 
-    if storage_util.check_document(path) and not storage_util.check_document(edit):
+    ret = post(f'{basePath}/passport/{filename}')
+    result = ret.json()
+    code = ret.status_code
 
-        faces, labels = vision_util.detect_document(path, edit)
-        if faces == 0:
-            storage_util.delete_document(f'{DOCUMENT_FOLDER}/{filename}')
-            return 'No faces found, probably not a passport'
+    if code != 201:
+        return f'ERROR:\ncode: {code}\nmessage: {result}'
 
-        for label in labels:
-            if label.description == 'Identity document':
+    fields = ret['fields']
+
+    labels = ret['labels']
+    for label in labels:
+        if label.description == 'Identity document':
                 messages.clear()
                 messages.append(f'Found correct label with score: {label.score}')
                 break
+        messages.append('Found {} with confidence: {}'.format(label['label'], label['confidence']))
 
-            messages.append(f'Found label {label.description} with score: {label.score}')
 
-        content = storage_util.get_document(edit)
-        person = vision_util.detect_person(content, photo)
-        if person == 0:
-            face = vision_util.crop_face(content, photo)
-            print(face)
+    # if storage_util.check_document(path) and not storage_util.check_document(edit):
 
-        fields = vision_util.detect_text(edit)
+    #     faces, labels = vision_util.detect_document(path, edit)
+    #     if faces == 0:
+    #         storage_util.delete_document(f'{DOCUMENT_FOLDER}/{filename}')
+    #         return 'No faces found, probably not a passport'
+
+    #     for label in labels:
+    #         if label.description == 'Identity document':
+    #             messages.clear()
+    #             messages.append(f'Found correct label with score: {label.score}')
+    #             break
+
+    #         messages.append(f'Found label {label.description} with score: {label.score}')
+
+    #     content = storage_util.get_document(edit)
+    #     person = vision_util.detect_person(content, photo)
+    #     if person == 0:
+    #         face = vision_util.crop_face(content, photo)
+    #         print(face)
+
+    #     fields = vision_util.detect_text(edit)
         
-    return render_template('results.html', filename=filename, original = 'original', edited = 'edited', photo = 'photo', fields=fields, messages=messages)
+    return render_template('results.html', filename=filename, original='original', edited='edited', photo='photo', fields=fields, messages=messages)
 
 @app.route('/multiple', methods=['GET', 'POST'])
 def upload_multiple():

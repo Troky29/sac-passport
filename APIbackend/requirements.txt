@@ -1,0 +1,7 @@
+flask
+flask-restful
+gunicorn
+google-cloud-vision
+google-cloud-storage
+Pillow
+opencv-python
