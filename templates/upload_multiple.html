@@ -1,0 +1,15 @@
+<html>
+    <head>
+        <title>Upload Page</title>
+    </head>
+    <body>
+        <form method="POST" enctype="multipart/form-data">
+            <b>Select multiple file to analyse: </b><br>
+            {{ multipleimageform.csrf_token }}
+            {{ multipleimageform.files }}<br>
+            <span class="validation_error">{{ ', '.join(multipleimageform.files.errors) }}</span><br>
+            <input type="submit" value="upload">
+        </form>
+    </body>
+    <a href="{{url_for('index')}}">index</a>
+</html>

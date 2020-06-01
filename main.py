@@ -1,8 +1,8 @@
 from flask import Flask, render_template, send_from_directory, redirect, url_for
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
-from wtforms import StringField, IntegerField, DateField
-from wtforms.validators import DataRequired
+from wtforms import MultipleFileField
+from wtforms.validators import DataRequired, ValidationError
 from werkzeug.utils import secure_filename
 from uuid import uuid4
 import sys
@@ -15,33 +15,26 @@ from vision import Vision
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secret'
-# TEMPORANY_FOLDER = 'tmp'
-# PROFILE_FOLDER = 'profile'
-# IDENTITY_FOLDER = 'identity'
 DOCUMENT_FOLDER = 'document'
-# storage_bucket = 'sac-storage-test'
 MAX_CONTENT_LENGHT = 20 * 1024 * 1024 #20 MB max image dimension
+ALLOWED_EXTENSIONS = ['jpg', 'png', 'jpeg', 'pdf']
 storage_util = Storage()
 vision_util = Vision()
 
+
+
 class ImageForm(FlaskForm):
-    img = FileField('image', validators=[FileRequired(), FileAllowed(['jpg', 'png', 'jpeg', 'pdf'], 'Images or PDF only!')])
+    img = FileField('image', validators=[FileRequired(), FileAllowed(ALLOWED_EXTENSIONS, 'Images or PDF only!')])
 
-# class DocumentForm(FlaskForm):
-#     doc = FileField('file', validators=[FileRequired(), FileAllowed(['pdf'], 'Only PDF!')])
+def validate_extension(form, field):
+        for image in field.data:
+            filename = image.filename
+            extension = os.path.splitext(filename)[1].strip('.')
+            if extension.lower() not in ALLOWED_EXTENSIONS:
+                raise ValidationError("Images or PDF only!")
 
-# class IdentityForm(FlaskForm):
-#     municipality = StringField('municipality', validators=[DataRequired()])
-#     surname = StringField('surname', validators=[DataRequired()])
-#     name = StringField('name', validators=[DataRequired()])
-#     place_of_birth = StringField('place of birth', validators=[DataRequired()])
-#     province_of_birth = StringField('province of birth', validators=[DataRequired()])
-#     date_of_birth = StringField('date of birth', validators=[DataRequired()])
-#     sex = StringField('sex', validators=[DataRequired()])
-#     height = IntegerField('height', validators=[DataRequired()])
-#     nationality = StringField('nationality', validators=[DataRequired()])
-#     issuing = StringField('issuing', validators=[DataRequired()])
-#     expiry = StringField('expiry', validators=[DataRequired()])
+class MultipleImageForm(FlaskForm):
+    files = MultipleFileField('files', render_kw={'multiple':True}, validators=[DataRequired(), validate_extension])
 
 @app.route('/single', methods=['GET', 'POST'])
 def upload_single():
@@ -51,7 +44,7 @@ def upload_single():
         img = imageform.img.data
         _, extension = os.path.splitext(img.filename)
 
-        filename = secure_filename(str(uuid4()))
+        filename = str(uuid4()) + secure_filename(img.filename)
         path = f'{DOCUMENT_FOLDER}/{filename}/original'
         content = img.read()
         
@@ -97,10 +90,21 @@ def review_single(filename):
             face = vision_util.crop_face(content, photo)
             print(face)
 
-        # content = storage_util.get_document(path)
         fields = vision_util.detect_text(edit)
         
     return render_template('results.html', filename=filename, original = 'original', edited = 'edited', photo = 'photo', fields=fields, messages=messages)
+
+@app.route('/multiple', methods=['GET', 'POST'])
+def upload_multiple():
+    multipleimageform = MultipleImageForm()
+    filenames = []
+    if multipleimageform.validate_on_submit():
+        for image in multipleimageform.files.data:
+            filenames.append(str(uuid4()) + secure_filename(image.filename))
+
+        return f'Upload complete\n{filenames}'
+
+    return render_template('upload_multiple.html', multipleimageform=multipleimageform)
 
 @app.route('/', methods=['GET'])
 def index():

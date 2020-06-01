@@ -259,7 +259,6 @@ class Vision(object):
 
             response.append({'field':doc_fields[i]['field'], 'value':result})
         
-        #TODO: Mettere un bel controllo, in modo tale da utilizzare la coordinata verticale della parola già presente nella linea più vicina...
         lines = []
         for line in doc_lines:
             y = line['words'][0]['start'].y
