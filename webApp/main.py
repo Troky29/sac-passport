@@ -12,7 +12,6 @@ import pdf2image
 from storage import Storage
 from vision import Vision
 
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secret'
 DOCUMENT_FOLDER = 'document'
@@ -99,7 +98,9 @@ def upload_multiple():
     multipleimageform = MultipleImageForm()
     filenames = []
     if multipleimageform.validate_on_submit():
-        for image in multipleimageform.files.data:
+        images = multipleimageform.files.data
+        for image in images:
+            content = image.read()
             filenames.append(str(uuid4()) + secure_filename(image.filename))
 
         return f'Upload complete\n{filenames}'

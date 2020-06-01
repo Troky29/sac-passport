@@ -1,5 +1,6 @@
 .vscode
-__pychache__
+__pycache__
 docs
-env
+webApp/env
+APIbackend/env
 key.json
