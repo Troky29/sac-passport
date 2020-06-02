@@ -10,6 +10,18 @@
             <span class="validation_error">{{ ', '.join(multipleimageform.files.errors) }}</span><br>
             <input type="submit" value="upload">
         </form>
-    </body>
+
+        {% for error in errors %}
+            {{ error }}<br>
+        {% endfor %}
+
+        {% if filenames %}
+            <b>Upload Done</b><br>
+            {% for filename in filenames %}
+                {{ filename[36:] }}<br>
+            {% endfor %}
+        {% endif%}
+
     <a href="{{url_for('index')}}">index</a>
+    </body>   
 </html>

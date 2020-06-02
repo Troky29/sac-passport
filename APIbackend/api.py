@@ -32,8 +32,10 @@ class CheckPassport(Resource):
 
         if ret == 404:
             return 'File not found', 404
+        elif ret == 400:
+            return 'No faces found, probably not a passport', 400
         
-        return {'fields':ret}, 200
+        return ret, 200
 
     def post(self, filename):
         if not checkFilename(filename):
@@ -41,13 +43,11 @@ class CheckPassport(Resource):
         
         content = request.get_data()
 
-        res = passport.post_passport(filename, content)
-        if res == 409:
-            return 'File already existing', 409
-        elif res == 400:
-            return 'No faces found, probably not a passport', 400
+        ret = passport.post_passport(filename, content)
+        if ret == 409:
+            return 'File already exist', 409
         
-        return {'labels':res}, 201
+        return 'Success', 201
 
     def delete(self, filename):
         if not checkFilename(filename):
