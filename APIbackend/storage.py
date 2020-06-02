@@ -1,14 +1,9 @@
-from google.cloud import storage, vision
-from google.protobuf import json_format
+from google.cloud import storage
 
 storage_client = storage.Client()
 bucket_name = 'sac-storage-205890'
 
 class Storage(object):
-
-    # def create_bucket(self, bucket_name):
-    #     storage_client.create_bucket(bucket_name)
-    #     return f'Created bucket {bucket_name}'
 
     def upload_document(self, my_file, blob_name):
         bucket = storage_client.bucket(bucket_name)

@@ -1,17 +1,14 @@
-    
-    
-    
-    
-    def detect_text(self, content):
-        image = vision.types.Image(content=content)
-        response = client.document_text_detection(image=image)
-        document = response.full_text_annotation
+import cv2
+import re
+        
+class FieldDetection(object):
 
+    def retrieve_fields(self, document):
         fields = ['type',
             'code of issuing state',
             'passport no',
             'surname',
-            'given names',
+            'given name',
             'nationality',
             'date of birth',
             'sex',
@@ -20,7 +17,8 @@
             'authority',
             'date of expiry',
             'country code',
-            'personal no']
+            'personal no',
+            'issued by']
 
         doc_words = []
         doc_lines = []
@@ -78,7 +76,7 @@
         for i in range(len(doc_fields)):
             x1 = doc_fields[i]['start'].x
             y1 = doc_fields[i]['start'].y
-            best = 300
+            best = 150
             result = ''
             dist = 0
             for line in doc_lines:
@@ -86,18 +84,20 @@
                 y2 = line['words'][0]['start'].y
                 x3 = line['words'][-1]['end'].x
                 dist = cv2.norm((x1, y1), (x2, y2))
-                if dist < best and 0< y2 - y1 < 100 and x3 > x1:
+                if dist < best and 0< y2 - y1 < 50 and x3 > x1:
                     
                     if i < len(doc_fields) - 1:
 
                         field_vertical_distance = abs(doc_fields[i]['end'].y - doc_fields[i+1]['start'].y)
-
-                        if field_vertical_distance < 50 and x3 > doc_fields[i+1]['start'].x:
+                        
+                        if field_vertical_distance < 40 and x3 > doc_fields[i+1]['start'].x:
                             for k in range(1, len(line['words'])):
-                                if line['words'][-k]['end'].x > doc_fields[i+1]['start'].x:
-                                    doc_lines.append({'text':''.join(line['text'].split()[-k:]), 'words':line['words'][-k:]})
+                                next_field = doc_fields[i+1]['start'].x
+                                if line['words'][-k]['end'].x > next_field and line['words'][-k-1]['end'].x < next_field:
+                                    doc_lines.append({'text':' '.join(line['text'].split()[-k:]), 'words':line['words'][-k:]})
                                     line['words'] = line['words'][:-k]
                                     line['text'] = ' '.join(line['text'].split()[:-k])
+                                    break
 
                     result = line['text']
                     best = dist
@@ -118,7 +118,6 @@
         for line in sorted_lines[-2:]:
             line['words'] = sorted(line['words'], key=lambda k: k['start'].x)
             for word in line['words']: barcode += word['word'].strip()
-            print(barcode, '\n')
         
         response.append({'field':'barcode', 'value':re.sub("[^0-9A-Z]", "<", barcode)})
 

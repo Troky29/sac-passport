@@ -7,13 +7,14 @@ storage_util = Storage()
 vision_util = Vision()
 
 class Passport(object):
-    def post_passport(self, filename):
+    def post_passport(self, filename, content):
         path = f'{DOCUMENT_FOLDER}/{filename}/original'
         edit = f'{DOCUMENT_FOLDER}/{filename}/edited'
         photo = f'{DOCUMENT_FOLDER}/{filename}/photo'
         labels_found = []
 
-        if storage_util.check_document(path):
+        if not storage_util.check_document(path):
+            storage_util.upload_document(content, path)
 
             faces, labels = vision_util.detect_document(path, edit)
             if faces == 0:
@@ -29,12 +30,27 @@ class Passport(object):
                 face = vision_util.crop_face(content, photo)
                 print(face)
 
-            fields = vision_util.detect_text(edit)
-
-            return {'labels':labels_found, 'fields':fields}
+            return labels_found
 
         else:
-            return 404
+            return 409
     
-    def get_passport(self, filename):
-        pass
+    def get_passport_fields(self, filename):
+        edit = f'{DOCUMENT_FOLDER}/{filename}/edited'
+
+        if not storage_util.check_document(edit):
+            return 404
+
+        fields = vision_util.detect_text(edit)
+
+        return fields
+
+    def get_passport(self, filename, document):
+        path = f'{DOCUMENT_FOLDER}/{filename}/{document}'
+
+        return storage_util.get_document(path)
+
+    def delete_passport(self, filename):
+        path = f'{DOCUMENT_FOLDER}/{filename}'
+        images = ['/original', '/edited', '/photo', '']
+        for image in images: storage_util.delete_document(path + image)
