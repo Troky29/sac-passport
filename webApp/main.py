@@ -97,7 +97,6 @@ def upload_multiple():
     multipleimageform = MultipleImageForm()
     filenames = []
     errors = []
-    messages = []
 
     if multipleimageform.validate_on_submit():
         images = multipleimageform.files.data
