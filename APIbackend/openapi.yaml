@@ -2,7 +2,7 @@ swagger: "2.0"
 
 info:
   title: "Price Monitor API"
-  description: "An application for monitoring prices on e-commerce"
+  description: "An application for analysing passoports"
   version: "1.0.0"
   
 host: "sac-passport-205890.appspot.com"
@@ -46,6 +46,7 @@ paths:
           description: "File already exists"
     delete:
       description: "Delete all passport files"
+      operationId: "deletePassport"
       responses:
         200:
           description: "Success"

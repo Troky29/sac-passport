@@ -1,0 +1,12 @@
+service: api
+
+runtime: python
+env: flex
+entrypoint: gunicorn api:app
+
+runtime_config:
+  python_version: 3
+
+endpoints_api_service:
+  name: sac-passport-205890.appspot.com
+  rollout_strategy: managed

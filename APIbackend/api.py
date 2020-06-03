@@ -54,7 +54,7 @@ class CheckPassport(Resource):
             return 'Invalid input data', 400
 
         passport.delete_passport(filename)
-
+        #TODO: parte anche di eliminazione all'iterno di firestore, se non vuoi mettere anche qua una api che scrive direttamente i risultati
         return 'Success', 200
 
 class PassportImage(Resource):
