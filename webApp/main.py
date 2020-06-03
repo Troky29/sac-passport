@@ -11,6 +11,7 @@ import io
 import pdf2image
 from requests import get, post, delete
 from base64 import b64decode
+from google.cloud import pubsub_v1
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secret'
@@ -18,6 +19,12 @@ DOCUMENT_FOLDER = 'document'
 MAX_CONTENT_LENGHT = 20 * 1024 * 1024 #20 MB max image dimension
 ALLOWED_EXTENSIONS = ['jpg', 'png', 'jpeg', 'pdf']
 basePath = 'http://127.0.0.1:5000/api/v1'
+
+project_id = 'sac-passport-205890'
+topic_name = 'start-operations'
+publisher = pubsub_v1.PublisherClient()
+topic_path = publisher.topic_path(project_id, topic_name)
+
 
 class ImageForm(FlaskForm):
     img = FileField('image', validators=[FileRequired(), FileAllowed(ALLOWED_EXTENSIONS, 'Images or PDF only!')])
@@ -104,16 +111,20 @@ def upload_multiple():
             filename, content = read_image(image)
 
             if sys.getsizeof(content) < MAX_CONTENT_LENGHT:
-                # ret = post(f'{basePath}/passport/{filename}', data=content)
-                # result = ret.json()
+                ret = post(f'{basePath}/passport/{filename}', data=content)
+                result = ret.json()
                 
-                # code = ret.status_code
-                # if code != 201:
-                #     return f'ERROR:\ncode: {code}\nmessage: {result}'
+                code = ret.status_code
+                if code != 201:
+                    return f'ERROR:\ncode: {code}\nmessage: {result}'
                 filenames.append(filename)
             else:
                 errors.append(f"{image.filename} skipped: file too big (max 20MB)")
 
+        attribute = ' '.join(filenames).encode('ascii')
+        print(attribute)
+        future = publisher.publish(topic_path, b'Start batch operation', filename=attribute)
+        print(future.result())
     return render_template('upload_multiple.html', multipleimageform=multipleimageform, filenames=filenames, errors=errors)
 
 @app.route('/', methods=['GET'])

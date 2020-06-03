@@ -1,3 +1,4 @@
 FLASK-WTF
 flask
 pdf2image
+google-cloud-pubsub

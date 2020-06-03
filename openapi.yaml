@@ -1,0 +1,120 @@
+swagger: "2.0"
+
+info:
+  title: "Price Monitor API"
+  description: "An application for monitoring prices on e-commerce"
+  version: "1.0.0"
+  
+host: "sac-passport-205890.appspot.com"
+basePath: "/api/v1"
+
+schemes:
+    - "https"
+
+paths:
+  /passport/{filename}:
+    parameters:
+      - name: filename
+        in: path
+        required: true
+        description: "Name of the passport"
+        type: string
+        minLength: 36
+    get:
+      description: "Get info about an uploaded passport"
+      operationId: "getPassportInfo"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            $ref: '#/definitions/PassportInfo'
+        404:
+          description: "File not found"
+        400:
+          description: "Invalid input data"
+        406:
+          description: "No faces found, probably not a passport"
+    post:
+      description: "Upload a passport"
+      operationId: "uploadPassport"
+      responses:
+        201:
+          description: "Success."
+        400:
+          description: "Invalid input data"
+        409:
+          description: "File already exists"
+    delete:
+      description: "Delete all passport files"
+      responses:
+        200:
+          description: "Success"
+        404:
+          description: "Invalid input data"
+    
+
+  /passport/read/{filename}/{document}:
+    parameters:
+      - name: filename
+        in: path
+        required: true
+        description: "Name of the passport"
+        type: string
+        minLength: 36
+      - name: document
+        in: path
+        required: true
+        description: "Witch passport file to view"
+        type: string
+    get:
+      description: "Return corresponding image"
+      operationId: "getImage"
+      responses:
+        200:
+          description: "Success."
+          schema:
+            $ref: '#/definitions/Image'
+        404:
+          description: "File not found"
+        400:
+          description: "Invalid input data"
+        
+
+definitions:
+  PassportInfo:
+    type: object
+    properties:
+      fields:
+        type: array
+        items:
+          $ref: "#/definitions/Field"
+      labels:
+        type: array
+        items:
+          $ref: "#/definitions/Label"
+      
+  Field:
+    type: object
+    properties:
+      field:
+        type: string
+      value:
+        type: string
+        
+  Label:
+    type: object
+    properties:
+      label:
+        type: string
+      confidence:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 1.0
+        
+  Image:
+    type: object
+    properties:
+      image:
+        type: string
+        format: byte #64base encoded

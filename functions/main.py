@@ -1,14 +1,33 @@
 def batch_passport(event, context):
     from google.cloud import firestore
-    db = firestore.Client(project='sace-passport-205890')
+    from requests import get
+    db = firestore.Client(project='sac-passport-205890')
+
+    basePath = 'http://127.0.0.1:5000/api/v1'
 
     if 'attributes' in event:
-        if 'files' in event['attributes']:
-            filenames = event['attributes']['files']
+        if 'filenames' in event['attributes']:
+            filenames = event['attributes']['filenames']
 
-            for filename in filenames:
+            for filename in filenames.split():
+                ret = get(f'{basePath}/passport/{filename}')
+                result = ret.json()
+                code = ret.status_code
+                passport = {}
+
+                #TODO: send error message
+                if code != 200: continue
+                
+                #TODO: altro messaggio di errore
+                labels = result['labels']
+                if all(label['label' != 'Identity document'] for label in labels): continue
+
+                fields = result['fields']
+                for field in fields: passport[field['field']] = field['value']
+
                 passport_ref = db.collection(u'passport').document(filename)
-                #TODO: ricopia la lista di operazioni prese da prima, ed eventualemnte la pubblicazione del procedimento del processo, con una percentuale, oppure con 4 su 15 fatti per esempio
-        else:
-            filenames = None
-            print('Nothing done')
+                passport_ref.set(passport)
+                #TODO: messaggio di completamento
+    else:
+        filenames = None
+        print('Nothing done')
