@@ -18,7 +18,7 @@ app.config['SECRET_KEY'] = 'Secret'
 DOCUMENT_FOLDER = 'document'
 MAX_CONTENT_LENGHT = 20 * 1024 * 1024 #20 MB max image dimension
 ALLOWED_EXTENSIONS = ['jpg', 'png', 'jpeg', 'pdf']
-basePath = 'http://127.0.0.1:5000/api/v1'
+basePath = 'https://sac-passport-205890.nw.r.appspot.com/api/v1'
 
 project_id = 'sac-passport-205890'
 topic_name = 'start-operations'
@@ -65,8 +65,8 @@ def upload_single():
         if sys.getsizeof(content) < MAX_CONTENT_LENGHT:
             ret = post(f'{basePath}/passport/{filename}', data=content)
             result = ret.json()
-            
             code = ret.status_code
+
             if code != 201:
                 return f'ERROR:\ncode: {code}\nmessage: {result}'
 
