@@ -1,11 +1,8 @@
 service: api
 
-runtime: python
+runtime: custom
 env: flex
-entrypoint: gunicorn api:app
-
-runtime_config:
-  python_version: 3
+entrypoint: gunicorn -b :$PORT api:app
 
 endpoints_api_service:
   name: sac-passport-205890.appspot.com

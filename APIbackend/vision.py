@@ -159,34 +159,3 @@ class Vision(object):
         document = response.full_text_annotation
 
         return detection_util.retrieve_fields(document)
-
-if __name__ == "__main__":
-    path = f'document/8656d09f-d942-49ec-aac2-aabcda7994de/original'
-    edited = f'document/8656d09f-d942-49ec-aac2-aabcda7994de/edited'
-    # content = storage_util.get_document(edited)
-    ret = Vision().detect_text(edited)
-    print(ret)
-
-    # def process_document(self, path):
-    #         name = path.split('.')[0]
-    #         return self.detect_documents(f'gs://{storage_bucket}/{path}', f'gs://{storage_bucket}/{name}/')
-
-    # def detect_documents(self, source_uri, destination_uri):
-    #     mime_type = 'application/pdf'
-    #     batch_size = 2
-    #     feature = vision.types.Feature(type=vision.enums.Feature.Type.DOCUMENT_TEXT_DETECTION)
-    #     source = vision.types.GcsSource(uri=source_uri)
-    #     input_config = vision.types.InputConfig(gcs_source=source, mime_type=mime_type)
-    #     destination = vision.types.GcsDestination(uri=destination_uri)
-    #     output_config = vision.types.OutputConfig(gcs_destination=destination, batch_size=batch_size)
-
-    #     async_request = vision.types.AsyncAnnotateFileRequest(features=[feature], input_config=input_config, output_config=output_config)
-
-    #     operation = client.async_batch_annotate_files(requests=[async_request])
-    #     operation.result(timeout=60)
-
-    #     match = re.match(r'gs://([^/]+)/(.+)', destination_uri)
-    #     bucket_name = match.group(1)
-    #     prefix = match.group(2)
-
-    #     return storage_util.get_text(bucket_name, prefix, vision.types.AnnotateFileResponse())

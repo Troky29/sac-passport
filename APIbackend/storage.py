@@ -31,18 +31,3 @@ class Storage(object):
         bucket = storage_client.bucket(bucket_name)
         blob = bucket.blob(blob_name)
         return blob.exists()
-
-    # def get_text(self, bucket_name, prefix, types):
-    #     bucket = storage_client.bucket(bucket_name)
-    #     blob_list = list(bucket.list_blobs(prefix=prefix))
-
-    #     fulltext = ''
-        
-    #     for blob in blob_list:
-    #         json_string = blob.download_as_string()
-    #         response = json_format.Parse(json_string, types)
-
-    #         for page in response.responses:
-    #             fulltext += page.full_text_annotation.text
-
-    #     return fulltext

@@ -18,13 +18,12 @@ app.config['SECRET_KEY'] = 'Secret'
 DOCUMENT_FOLDER = 'document'
 MAX_CONTENT_LENGHT = 20 * 1024 * 1024 #20 MB max image dimension
 ALLOWED_EXTENSIONS = ['jpg', 'png', 'jpeg', 'pdf']
-basePath = 'https://sac-passport-205890.nw.r.appspot.com/api/v1'
+basePath = 'https://api-dot-sac-passport-205890.nw.r.appspot.com/api/v1'
 
 project_id = 'sac-passport-205890'
 topic_name = 'start-operations'
 publisher = pubsub_v1.PublisherClient()
 topic_path = publisher.topic_path(project_id, topic_name)
-
 
 class ImageForm(FlaskForm):
     img = FileField('image', validators=[FileRequired(), FileAllowed(ALLOWED_EXTENSIONS, 'Images or PDF only!')])

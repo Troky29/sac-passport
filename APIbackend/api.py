@@ -75,5 +75,5 @@ api.add_resource(CheckPassport, f'{basePath}/passport/<string:filename>')
 api.add_resource(PassportImage, f'{basePath}/passport/read/<string:filename>/<string:document>')
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', debug=True)
+    app.run(host='127.0.0.1', port=8080, debug=True)
 
