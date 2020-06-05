@@ -10,8 +10,8 @@
         <img src="{{url_for('send_image', filename=filename, document = original)}}" height="200"><br>
         <h2>Edited image:</h2>
         <img src="{{url_for('send_image', filename=filename, document = edited)}}" height="400"><br>
-        {%for field in fields %}
-            {{field['field']}}: {{field['value']}}<br>
+        {%for field, value in fields.items() %}
+            {{field}}: {{value}}<br>
         {% endfor %}
         <h2>Person photo:</h2>
         <img src="{{url_for('send_image', filename=filename, document = photo)}}" height="200"><br>

@@ -1,5 +1,8 @@
 from storage import Storage
 from vision import Vision
+import os
+import io
+import pdf2image
 
 DOCUMENT_FOLDER = 'document'
 storage_util = Storage()
@@ -9,6 +12,15 @@ vision_util = Vision()
 class Passport(object):
     def post_passport(self, filename, content):
         path = f'{DOCUMENT_FOLDER}/{filename}/original'
+
+        _, extension = os.path.splitext(filename)
+
+        if extension == '.pdf':
+            page = pdf2image.convert_from_bytes(content)
+            f = io.BytesIO()
+            page[0].save(f, 'JPEG')
+            filename += '.jpeg'
+            content = f.getvalue()
 
         if not storage_util.check_document(path):
             storage_util.upload_document(content, path)
@@ -21,7 +33,7 @@ class Passport(object):
         edit = f'{DOCUMENT_FOLDER}/{filename}/edited'
         photo = f'{DOCUMENT_FOLDER}/{filename}/photo'
 
-        labels_found = []
+        labels_found = {}
 
         if storage_util.check_document(path):
         
@@ -32,12 +44,14 @@ class Passport(object):
                 return 400
 
             for label in labels:
-                labels_found.append({'label':label.description, 'confidence':label.score})
-                    
+                labels_found[label.description] = label.score
+ 
             content = storage_util.get_document(edit)
             person = vision_util.detect_person(content, photo)
             if person == 0:
-                vision_util.crop_face(content, photo)
+                if vision_util.crop_face(content, photo) == 0:
+                    storage_util.delete_document(f'{DOCUMENT_FOLDER}/{filename}')
+                    return 400
 
             fields = vision_util.detect_text(edit)
 

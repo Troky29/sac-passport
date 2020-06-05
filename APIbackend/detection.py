@@ -24,7 +24,7 @@ class FieldDetection(object):
         doc_lines = []
         doc_fields = []
         
-        response = []
+        response = {}
 
         lenght = 0
         for page in document.pages:
@@ -102,7 +102,7 @@ class FieldDetection(object):
                     result = line['text']
                     best = dist
 
-            response.append({'field':doc_fields[i]['field'], 'value':result})
+            response[doc_fields[i]['field']] = result
         
         lines = []
         for line in doc_lines:
@@ -119,6 +119,6 @@ class FieldDetection(object):
             line['words'] = sorted(line['words'], key=lambda k: k['start'].x)
             for word in line['words']: barcode += word['word'].strip()
         
-        response.append({'field':'barcode', 'value':re.sub("[^0-9A-Z]", "<", barcode)})
+        response['barcode'] = re.sub("[^0-9A-Z]", "<", barcode)
 
         return response

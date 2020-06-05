@@ -5,3 +5,4 @@ google-cloud-vision
 google-cloud-storage
 Pillow
 opencv-python
+pdf2image

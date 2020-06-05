@@ -133,22 +133,22 @@ class Vision(object):
                 if face.detection_confidence > best.detection_confidence:
                     best = face
 
-        image = io.BytesIO(content)
-        img = Image.open(image)
-        width, height = img.size
+            image = io.BytesIO(content)
+            img = Image.open(image)
+            width, height = img.size
 
-        vert = best.fd_bounding_poly.vertices
-        x1 = max(vert[0].x - 30, 0)
-        y1 = max(vert[0].y - 30, 0)
-        x2 = min(vert[2].x + 30, width)
-        y2 = min(vert[2].y + 30, height)
+            vert = best.fd_bounding_poly.vertices
+            x1 = max(vert[0].x - 30, 0)
+            y1 = max(vert[0].y - 30, 0)
+            x2 = min(vert[2].x + 30, width)
+            y2 = min(vert[2].y + 30, height)
 
-        
-        out = img.crop([x1, y1, x2, y2])
+            
+            out = img.crop([x1, y1, x2, y2])
 
-        f = io.BytesIO()
-        out.save(f, format=img.format)
-        storage_util.upload_document(f.getvalue(), dest)
+            f = io.BytesIO()
+            out.save(f, format=img.format)
+            storage_util.upload_document(f.getvalue(), dest)
 
         return face_num
     
