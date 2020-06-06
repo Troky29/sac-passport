@@ -19,7 +19,6 @@ class Passport(object):
             page = pdf2image.convert_from_bytes(content)
             f = io.BytesIO()
             page[0].save(f, 'JPEG')
-            filename += '.jpeg'
             content = f.getvalue()
 
         if not storage_util.check_document(path):
@@ -36,24 +35,26 @@ class Passport(object):
         labels_found = {}
 
         if storage_util.check_document(path):
-        
-            faces, labels = vision_util.detect_document(path, edit)
+            if not storage_util.check_document(edit):
+                faces, labels = vision_util.detect_document(path, edit)
 
-            if faces == 0:
-                storage_util.delete_document(f'{DOCUMENT_FOLDER}/{filename}')
-                return 400
-
-            for label in labels:
-                labels_found[label.description] = label.score
- 
-            content = storage_util.get_document(edit)
-            person = vision_util.detect_person(content, photo)
-            if person == 0:
-                if vision_util.crop_face(content, photo) == 0:
+                if faces == 0:
                     storage_util.delete_document(f'{DOCUMENT_FOLDER}/{filename}')
                     return 400
 
+                for label in labels:
+                    labels_found[label.description] = label.score
+    
+                content = storage_util.get_document(edit)
+                person = vision_util.detect_person(content, photo)
+                if person == 0:
+                    if vision_util.crop_face(content, photo) == 0:
+                        storage_util.delete_document(f'{DOCUMENT_FOLDER}/{filename}')
+                        return 400
+
             fields = vision_util.detect_text(edit)
+        else:
+            return 404
 
         return {'fields':fields, 'labels':labels_found}
 

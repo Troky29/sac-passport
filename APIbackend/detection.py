@@ -1,5 +1,6 @@
 import cv2
 import re
+from fuzzywuzzy import fuzz
         
 class FieldDetection(object):
 
@@ -10,6 +11,7 @@ class FieldDetection(object):
             'surname',
             'given name',
             'nationality',
+            'citizenship',
             'date of birth',
             'sex',
             'place of birth',
@@ -17,7 +19,9 @@ class FieldDetection(object):
             'authority',
             'date of expiry',
             'country code',
+            'code of state',
             'personal no',
+            'personal number',
             'issued by']
 
         doc_words = []
@@ -26,6 +30,7 @@ class FieldDetection(object):
         
         response = {}
 
+        # We extract the words form the api call, appending them in lines and dividing different line on the same horizontal axis
         lenght = 0
         for page in document.pages:
             for block in page.blocks:
@@ -47,7 +52,8 @@ class FieldDetection(object):
                             if break_type == 2 or break_type == 3 or break_type == 5: string +='\n'
 
                         doc_words.append({'word':string, 'start':start, 'end':end})
-                        
+
+        # From these lines we extrapolate the ones that match a field definition
         line_text = ''
         start = 0
         line_start = doc_words[start]['start']
@@ -55,8 +61,11 @@ class FieldDetection(object):
             line_text += doc_words[i]['word']
 
             if '\n' in line_text:
+                passport = line_text.lower().strip()
+                if passport == 'passport' or passport == 'passeport': line_text = ''
+                line_split = re.split(r'/|\|', line_text.lower())
                 for field in fields:
-                    if field in line_text.lower():
+                    if any(fuzz.ratio(field, line.strip()) > 81 for line in line_split) or field in line_text.lower():
                         line_text = ''
                         if all(cur['field'] != field for cur in doc_fields):
                             doc_fields.append({'field':field, 'start':line_start, 'end':doc_words[i]['end']})
@@ -73,6 +82,7 @@ class FieldDetection(object):
                     start = i+1
                     line_start = doc_words[start]['start']
 
+        # Now we search the remaining lines to find the closest underneath each field
         for i in range(len(doc_fields)):
             x1 = doc_fields[i]['start'].x
             y1 = doc_fields[i]['start'].y
@@ -84,13 +94,13 @@ class FieldDetection(object):
                 y2 = line['words'][0]['start'].y
                 x3 = line['words'][-1]['end'].x
                 dist = cv2.norm((x1, y1), (x2, y2))
-                if dist < best and 0< y2 - y1 < 50 and x3 > x1:
+                if dist < best and 0< y2 - y1 < 55 and x3 > x1:
                     
                     if i < len(doc_fields) - 1:
 
                         field_vertical_distance = abs(doc_fields[i]['end'].y - doc_fields[i+1]['start'].y)
-                        
-                        if field_vertical_distance < 40 and x3 > doc_fields[i+1]['start'].x:
+                        # We apply an additional separation for a definition that ends under the next field
+                        if field_vertical_distance < 25 and x3 > doc_fields[i+1]['start'].x:
                             for k in range(1, len(line['words'])):
                                 next_field = doc_fields[i+1]['start'].x
                                 if line['words'][-k]['end'].x > next_field and line['words'][-k-1]['end'].x < next_field:
@@ -104,12 +114,13 @@ class FieldDetection(object):
 
             response[doc_fields[i]['field']] = result
         
+        # Now for extracting the bar code we try to determine the last two lines and merge in the correct order every element found
         lines = []
         for line in doc_lines:
             y = line['words'][0]['start'].y
-            if any(abs(y - cur['start']) < 20 for cur in lines):
+            if any(abs(y - cur['start']) < 27 for cur in lines):
                 for cur in lines:
-                    if abs(y - cur['start']) < 20: cur['words'] += line['words']
+                    if abs(y - cur['start']) < 27: cur['words'] += line['words']
             else:
                 lines.append({'start':y, 'words':line['words']})
         

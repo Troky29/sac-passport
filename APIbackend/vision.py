@@ -43,41 +43,76 @@ class Vision(object):
     def crop_document(self, content, roll, dest):
         source = np.asarray(bytearray(content), np.uint8)
         image = cv2.imdecode(source, cv2.IMREAD_UNCHANGED)
+        clip = 25
+
         h, w = image.shape[:2]
-        image = image[25:h-0, 25:w-25]
-        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        clipped = image[clip:h-clip, clip:w-clip]
+
+        gray = cv2.cvtColor(clipped, cv2.COLOR_RGB2GRAY)
 
         kernel = np.ones((5, 5), np.uint8)
         ker_er = np.ones((2, 2), np.uint8)
 
-        thr = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 5)
+        bil = cv2.bilateralFilter(gray, 3, 150, 150)
+
+        thr = cv2.adaptiveThreshold(bil, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 5)
         thr = cv2.erode(thr, ker_er, iterations=1)
         thr = cv2.morphologyEx(thr, cv2.MORPH_CLOSE, kernel, iterations=3)
         thr = cv2.dilate(thr, kernel, iterations=3)
 
-        hull = []
+        hulls = []
         contours, _ = cv2.findContours(thr, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
 
         for i in range(len(contours)):
-            hull.append(cv2.convexHull(contours[i]))
+            hulls.append(cv2.convexHull(contours[i]))
 
-        best = sorted(hull, key = cv2.contourArea, reverse=True)[0]
-        x1 = np.min(best[:, 0, 0])
-        y1 = np.min(best[:, 0, 1])
-        x2 = np.max(best[:, 0, 0])
-        y2 = np.max(best[:, 0, 1])
-        
-        cropped = image[y1:y2, x1:x2]
+        best = sorted(hulls, key = cv2.contourArea, reverse=True)[0]
+
+        mid = 0
+        for hull in hulls: mid += cv2.contourArea(hull)
+        mid /= len(hulls)
+
+        bestM = cv2.moments(best)
+        bestX = int(bestM['m10'] /bestM['m00'])
+        bestY = int(bestM['m01'] /bestM['m00']) 
+        bestCenter = np.array([bestX, bestY])
+
+        res = []
+        for hull in hulls:
+            if cv2.contourArea(hull) > mid:
+                M = cv2.moments(hull)
+                cX = int(M['m10'] /M['m00'])
+                cY = int(M['m01'] /M['m00'])
+                center = np.array([cX, cY])
+                distance = cv2.norm(bestCenter-center)
+                if distance < 1500:
+                    res.append(hull)
+
+        x1, y1 = clipped.shape[:2]
+        x2 = 0
+        y2 = 0
+        for hull in res:
+            x1 = min(x1, np.min(hull[:, 0, 0]))
+            y1 = min(y1, np.min(hull[:, 0, 1]))
+            x2 = max(x2, np.max(hull[:, 0, 0]))
+            y2 = max(y2, np.max(hull[:, 0, 1]))
+
+        if x1 == 0 and x2+1 == w-2*clip  and y2+1 == h-2*clip:
+            cropped = image
+        else:
+            cropped = clipped[y1:y2, x1:x2]
+
         cropped = cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB)
         out = Image.fromarray(cropped)
         form = Image.open(io.BytesIO(content)).format
 
         if abs(roll) > 6:
-            if abs(roll-90) < 5:
+            if abs(roll-90) < 6:
                 out = out.rotate(90, expand=True, fillcolor='white')
-            elif abs(roll+90) < 5:
+            elif abs(roll+90) < 6:
                 out = out.rotate(-90, expand=True, fillcolor='white')
-            elif abs(roll-180) < 5 or abs(roll+180) < 5:
+            elif abs(roll-180) < 6 or abs(roll+180) < 6:
                 out = out.rotate(180, expand=True, fillcolor='white')
             else:
                 out = out.rotate(roll, expand=True, fillcolor='white')

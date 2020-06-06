@@ -86,32 +86,22 @@ definitions:
     type: object
     properties:
       fields:
-        type: array
-        items:
-          $ref: "#/definitions/Field"
+        type: object
+        additionalProperties:
+          type: string
+        example:
+          name: Mario
+          surname: Rossi
       labels:
-        type: array
-        items:
-          $ref: "#/definitions/Label"
-      
-  Field:
-    type: object
-    properties:
-      field:
-        type: string
-      value:
-        type: string
-        
-  Label:
-    type: object
-    properties:
-      label:
-        type: string
-      confidence:
-        type: number
-        format: float
-        minimum: 0.0
-        maximum: 1.0
+        type: object
+        additionalProperties:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        example: 
+          document: 0.45
+          person: 0.75
         
   Image:
     type: object

@@ -1,7 +1,7 @@
 FROM gcr.io/google-appengine/python
 
 RUN apt-get update && apt-get install -y python-opencv
-RUN apt-get update && apt-get install -y poppler-utils
+RUN apt-get install -y poppler-utils
 RUN virtualenv /env -p python3
 
 ENV VIRTUAL_ENV /env

@@ -6,8 +6,8 @@
         <h1>Select action</h1>
         <a href="{{url_for('upload_single')}}">Scan a document</a><br>
         <a href="{{url_for('upload_multiple')}}">Scan multiple documents</a><br>
-        {% for message in messages %}
-            {{message}}<br>
+        {% for message, status in messages.items() %}
+            {{ message }}: {{ status }}<br>
         {% endfor %}
     </body>
 </html>

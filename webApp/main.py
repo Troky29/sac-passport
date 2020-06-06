@@ -8,7 +8,6 @@ from uuid import uuid4
 import os
 import io
 import json
-import pdf2image
 from requests import get, post, delete
 from base64 import b64decode
 from google.cloud import pubsub_v1
@@ -22,7 +21,7 @@ MAX_CONTENT_LENGHT = 20 * 1024 * 1024 #20 MB max image dimension
 ALLOWED_EXTENSIONS = ['jpg', 'png', 'jpeg', 'pdf']
 # basePath = 'https://api-dot-sac-passport-205890.nw.r.appspot.com/api/v1'
 basePath = 'http://127.0.0.1:8080/api/v1'
-MESSAGES = []
+MESSAGES = {}
 
 project_id = 'sac-passport-205890'
 topic_name = 'start-operations'
@@ -44,8 +43,6 @@ class MultipleImageForm(FlaskForm):
     files = MultipleFileField('files', render_kw={'multiple':True}, validators=[DataRequired(), validate_extension])
 
 def read_image(img):
-    _, extension = os.path.splitext(img.filename)
-
     filename = str(uuid4()) + secure_filename(img.filename)
     content = img.read()
     
@@ -114,6 +111,7 @@ def upload_multiple():
                 if code != 201:
                     return f'ERROR:\ncode: {code}\nmessage: {result}'
                 filenames.append(filename)
+                MESSAGES[filename] = 'WAITING'
             else:
                 errors.append(f"{image.filename} skipped: file too big (max 20MB)")
 
@@ -150,13 +148,18 @@ def clear_image(filename):
 
 @app.route('/pubsub/push', methods=['POST'])
 def pubsub_push():
-    print('Messaggio arrivato')
-    if request.args.get(('token', '')) != app.config['PUBSUB_VERIFICATION_TOKEN']:
+    if (request.args.get('token', '')) != app.config['PUBSUB_VERIFICATION_TOKEN']:
         return 'Invalid request', 400
-    
-    envelope = json.load(request.data.decode('utf-8'))
-    payload = b64decode(envelope['message']['data'])
-    MESSAGES.append(payload)
+
+    envelope = json.loads(request.data.decode('utf-8'))
+    operation = b64decode(envelope['message']['data']).decode('utf-8')
+    if 'attributes' in envelope['message']:
+        if 'status' in envelope['message']['attributes']:
+            status = envelope['message']['attributes']['status']
+    else:
+        status = 'UNKNOWN'
+
+    MESSAGES[operation] = status
 
     return 'OK', 200
 
