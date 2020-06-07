@@ -113,7 +113,14 @@ class FieldDetection(object):
                     best = dist
 
             response[doc_fields[i]['field']] = result
-        
+
+        #We check the passport type, it can be max 2 character long and default 'P'
+        if 'type' in response:
+            if len(response['type']) > 2 or response['type'] == '':
+                response['type'] = 'P'
+        else:
+            response['type'] = 'P'
+
         # Now for extracting the bar code we try to determine the last two lines and merge in the correct order every element found
         lines = []
         for line in doc_lines:

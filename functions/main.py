@@ -32,9 +32,6 @@ def batch_passport(event, context):
                     continue
 
                 fields = result['fields']
-                # fields = {}
-                # for field in result['fields']: fields[field['field']] = field['value']
-                # print(fields)
 
                 passport_ref = db.collection(u'passport').document(filename)
                 passport_ref.set(fields)
@@ -43,7 +40,3 @@ def batch_passport(event, context):
     else:
         filenames = None
         print('Nothing done')
-
-if __name__ == "__main__":
-    batch_passport({"message":"Contenuto del messaggio", 
-    "attributes":{"filenames":"fa9b8499-ee06-4197-9f06-7de342bb7d3aBill_Passport.JPG"}}, None)
