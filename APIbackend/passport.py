@@ -78,7 +78,10 @@ class Passport(object):
 
     def get_status(self):
         status = firestore_util.all_status()
-        return status
+        ret = []
+        for name, status in status.items():
+            ret.append({'name':name, 'status':status})
+        return ret
 
     def del_status(self):
         firestore_util.del_status()
