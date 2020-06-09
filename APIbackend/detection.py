@@ -94,7 +94,7 @@ class FieldDetection(object):
                 y2 = line['words'][0]['start'].y
                 x3 = line['words'][-1]['end'].x
                 dist = cv2.norm((x1, y1), (x2, y2))
-                if dist < best and 0< y2 - y1 < 55 and x3 > x1:
+                if dist < best and 0 < y2-y1 < 55 and x3 > x1:
                     
                     if i < len(doc_fields) - 1:
 
@@ -118,8 +118,6 @@ class FieldDetection(object):
         if 'type' in response:
             if len(response['type']) > 2 or response['type'] == '':
                 response['type'] = 'P'
-        else:
-            response['type'] = 'P'
 
         # Now for extracting the bar code we try to determine the last two lines and merge in the correct order every element found
         lines = []
@@ -138,5 +136,7 @@ class FieldDetection(object):
             for word in line['words']: barcode += word['word'].strip()
         
         response['barcode'] = re.sub("[^0-9A-Z]", "<", barcode)
+
+        #TODO: controllo del codice, unica analisi possibile con la libreria offerta da pyhton, controlla anche lo a capo
 
         return response

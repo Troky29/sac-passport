@@ -4,6 +4,3 @@ handlers:
   - url: /.*
     secure: always
     script: auto
-
-env_variables:
-  PUBSUB_VERIFICATION_TOKEN: passport-token

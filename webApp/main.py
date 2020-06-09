@@ -14,13 +14,12 @@ from google.cloud import pubsub_v1
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'Secret'
-app.config['PUBSUB_VERIFICATION_TOKEN'] = os.environ['PUBSUB_VERIFICATION_TOKEN']
 
 DOCUMENT_FOLDER = 'document'
 MAX_CONTENT_LENGHT = 20 * 1024 * 1024 #20 MB max image dimension
 ALLOWED_EXTENSIONS = ['jpg', 'png', 'jpeg', 'pdf']
-basePath = 'https://api-dot-sac-passport-205890.nw.r.appspot.com/api/v1'
-# basePath = 'http://127.0.0.1:8080/api/v1'
+# basePath = 'https://api-dot-sac-passport-205890.nw.r.appspot.com/api/v1'
+basePath = 'http://127.0.0.1:8080/api/v1'
 MESSAGES = {}
 
 project_id = 'sac-passport-205890'
@@ -124,9 +123,9 @@ def upload_multiple():
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST' and 'clear' in request.form:
-
         MESSAGES.clear()
-
+    if request.method == 'POST' and 'update' in request.form:
+        pull_request()
     return render_template('index.html', messages=MESSAGES)
 
 @app.route('/render/<filename>/<document>')

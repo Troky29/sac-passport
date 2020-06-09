@@ -1,5 +1,6 @@
 from storage import Storage
 from vision import Vision
+from firestore import Firestore
 import os
 import io
 import pdf2image
@@ -7,6 +8,7 @@ import pdf2image
 DOCUMENT_FOLDER = 'document'
 storage_util = Storage()
 vision_util = Vision()
+firestore_util = Firestore()
 
 
 class Passport(object):
@@ -52,7 +54,12 @@ class Passport(object):
                         storage_util.delete_document(f'{DOCUMENT_FOLDER}/{filename}')
                         return 400
 
-            fields = vision_util.detect_text(edit)
+            if not firestore_util.check_info(filename):
+                fields = vision_util.detect_text(edit)
+                firestore_util.save_info(filename, fields, labels_found)
+            else:
+                fields = firestore_util.get_info(filename)
+                labels_found = fields.pop('labels', None)
         else:
             return 404
 
@@ -67,3 +74,12 @@ class Passport(object):
         path = f'{DOCUMENT_FOLDER}/{filename}'
         images = ['/original', '/edited', '/photo', '']
         for image in images: storage_util.delete_document(path + image)
+        firestore_util.del_info(filename)
+
+    def get_status(self):
+        status = firestore_util.all_status()
+        return status
+
+    def del_status(self):
+        firestore_util.del_status()
+        return 'Success'

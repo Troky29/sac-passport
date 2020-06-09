@@ -3,6 +3,7 @@ flask-restful
 gunicorn
 google-cloud-vision
 google-cloud-storage
+google-cloud-firestore
 Pillow
 opencv-python
 pdf2image
