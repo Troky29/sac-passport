@@ -149,22 +149,22 @@ def clear_image(filename):
 
     return redirect(url_for('upload_single'))
 
-@app.route('/pubsub/push', methods=['POST'])
-def pubsub_push():
-    if (request.args.get('token', '')) != app.config['PUBSUB_VERIFICATION_TOKEN']:
-        return 'Invalid request', 400
+# @app.route('/pubsub/push', methods=['POST'])
+# def pubsub_push():
+#     if (request.args.get('token', '')) != app.config['PUBSUB_VERIFICATION_TOKEN']:
+#         return 'Invalid request', 400
 
-    envelope = json.loads(request.data.decode('utf-8'))
-    operation = b64decode(envelope['message']['data']).decode('utf-8')
-    if 'attributes' in envelope['message']:
-        if 'status' in envelope['message']['attributes']:
-            status = envelope['message']['attributes']['status']
-    else:
-        status = 'UNKNOWN'
+#     envelope = json.loads(request.data.decode('utf-8'))
+#     operation = b64decode(envelope['message']['data']).decode('utf-8')
+#     if 'attributes' in envelope['message']:
+#         if 'status' in envelope['message']['attributes']:
+#             status = envelope['message']['attributes']['status']
+#     else:
+#         status = 'UNKNOWN'
 
-    MESSAGES[operation] = status
+#     MESSAGES[operation] = status
 
-    return 'OK', 200
+#     return 'OK', 200
 
 if __name__ == "__main__":
     app.run(host='127.0.0.1', debug=True)

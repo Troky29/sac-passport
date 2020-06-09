@@ -1,12 +1,18 @@
 import cv2
 import re
 from fuzzywuzzy import fuzz
+from mrz.checker.td3 import TD3CodeChecker
         
 class FieldDetection(object):
 
     def retrieve_fields(self, document):
         fields = ['type',
             'code of issuing state',
+            'country code',
+            'code of state',
+            'issuing country',
+            'country',
+            'code',
             'passport no',
             'surname',
             'given name',
@@ -16,13 +22,12 @@ class FieldDetection(object):
             'sex',
             'place of birth',
             'date of issue',
+            'issuing authority',
             'authority',
+            'issued by',
             'date of expiry',
-            'country code',
-            'code of state',
-            'personal no',
             'personal number',
-            'issued by']
+            'personal no']
 
         doc_words = []
         doc_lines = []
@@ -129,14 +134,40 @@ class FieldDetection(object):
             else:
                 lines.append({'start':y, 'words':line['words']})
         
-        barcode = ''
+        mrz = ''
         sorted_lines = sorted(lines, key=lambda k: k['start'])
         for line in sorted_lines[-2:]:
             line['words'] = sorted(line['words'], key=lambda k: k['start'].x)
-            for word in line['words']: barcode += word['word'].strip()
-        
-        response['barcode'] = re.sub("[^0-9A-Z]", "<", barcode)
+            for word in line['words']: mrz += word['word'].strip()
 
-        #TODO: controllo del codice, unica analisi possibile con la libreria offerta da pyhton, controlla anche lo a capo
+        mrz = re.sub("[^0-9A-Z]", "<", mrz)
+        response['mrz'] = mrz
+
+        response['mrz_validity'] = 'not valid'
+        #Finally we check the mrz of the passport
+        if len(mrz) == 88:
+            mrz = mrz[:44] + '\n' + mrz[44:]
+            mrz = mrz.upper()
+            try:
+                checker = TD3CodeChecker(mrz, check_expiry=True)
+            except:
+                checker = False
+
+            if checker:
+                if checker.report_warnings:
+                    response['mrz_validity'] = checker.report_warnings[0]
+                else:
+                    response['mrz_validity'] = 'valid'
+
+                mrz_fields = checker.fields()
+                response['mrz_type'] = mrz_fields.document_type
+                response['mrz_country'] = mrz_fields.country
+                response['mrz_surname'] = mrz_fields.surname
+                response['mrz_given_names'] = mrz_fields.name
+                response['mrz_document_number'] = mrz_fields.document_number
+                response['mrz_nationality'] = mrz_fields.nationality
+                response['mrz_birth_date'] = mrz_fields.birth_date
+                response['mrz_sex'] = mrz_fields.sex
+                response['mrz_expiry_date'] = mrz_fields.expiry_date
 
         return response

@@ -48,7 +48,10 @@ class Vision(object):
         h, w = image.shape[:2]
         clipped = image[clip:h-clip, clip:w-clip]
 
-        gray = cv2.cvtColor(clipped, cv2.COLOR_RGB2GRAY)
+        if clipped.ndim == 2:
+            gray = clipped
+        else:
+            gray = cv2.cvtColor(clipped, cv2.COLOR_RGB2GRAY)
 
         kernel = np.ones((5, 5), np.uint8)
         ker_er = np.ones((2, 2), np.uint8)
