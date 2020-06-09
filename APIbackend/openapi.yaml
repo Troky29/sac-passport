@@ -1,7 +1,7 @@
 swagger: "2.0"
 
 info:
-  title: "Price Monitor API"
+  title: "Passport API"
   description: "An application for analysing passoports"
   version: "1.0.0"
   
@@ -72,14 +72,29 @@ paths:
       operationId: "getImage"
       responses:
         200:
-          description: "Success."
+          description: "Success"
           schema:
             $ref: '#/definitions/Image'
         404:
           description: "File not found"
         400:
           description: "Invalid input data"
-        
+          
+  /passport/status:
+    get:
+      description: "Return all status code of previosly started operations"
+      operationId: "getStatus"
+      responses:
+        200:
+          description: "Success"
+          schema:
+            $ref: "#/definitions/StatusList"
+    delete:
+      description: "Deletes all status code of previous operations"
+      operationId: "delStatus"
+      responses:
+        200:
+          description: "Success"
 
 definitions:
   PassportInfo:
@@ -102,6 +117,25 @@ definitions:
         example: 
           document: 0.45
           person: 0.75
+          
+  StatusList:
+    type: object
+    properties:
+      statusList:
+        type: array
+        items:
+          $ref: "#/definitions/Status"
+            
+  Status:
+    type: object
+    properties:
+      name:
+        type: string
+        minLength: 36
+      status:
+        type: string
+        
+      
         
   Image:
     type: object

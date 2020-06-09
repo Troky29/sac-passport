@@ -72,11 +72,11 @@ class PassportImage(Resource):
 class PassportStatus(Resource):
     def get(self):
         ret = passport.get_status()
-        return ret, 200
+        return {'StatusList':ret}, 200
     
     def delete(self):
-        ret = passport.del_status()
-        return ret, 200
+        passport.del_status()
+        return 'Success', 200
 
 api.add_resource(CheckPassport, f'{basePath}/passport/<string:filename>')
 api.add_resource(PassportImage, f'{basePath}/passport/read/<string:filename>/<string:document>')

@@ -124,8 +124,15 @@ def upload_multiple():
 def index():
     if request.method == 'POST' and 'clear' in request.form:
         MESSAGES.clear()
+        ret = delete(f'{basePath}/passport/status')
+        result = ret.json()
+        code = result.status_code
+
     if request.method == 'POST' and 'update' in request.form:
-        pull_request()
+        ret = get(f'{basePath}/passport/status')
+        result = ret.json()
+        code = result.status_code
+
     return render_template('index.html', messages=MESSAGES)
 
 @app.route('/render/<filename>/<document>')
