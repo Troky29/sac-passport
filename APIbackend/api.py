@@ -72,6 +72,7 @@ class PassportImage(Resource):
 class PassportStatus(Resource):
     def get(self):
         ret = passport.get_status()
+        print(ret)
         return {'statuslist':ret}, 200
     
     def delete(self):

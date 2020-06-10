@@ -106,17 +106,19 @@ def upload_multiple():
                 result = ret.json()
                 
                 code = ret.status_code
+
                 if code != 201:
                     return f'ERROR:\ncode: {code}\nmessage: {result}'
                 filenames.append(filename)
-                MESSAGES[filename] = 'WAITING'
             else:
                 errors.append(f"{image.filename} skipped: file too big (max 20MB)")
 
         if filenames:
-            attribute = ' '.join(filenames).encode('ascii')
-            future = publisher.publish(topic_path, b'Start batch operation', filenames=attribute)
-            print(future.result())
+            for chunk in [filenames[x:x+20] for x in range(0, len(filenames), 20)]:
+                attribute = ' '.join(chunk).encode('ascii')
+                future = publisher.publish(topic_path, b'Start batch operation', filenames=attribute)
+                print(future.result())
+
     return render_template('upload_multiple.html', multipleimageform=multipleimageform, filenames=filenames, errors=errors)
 
 @app.route('/', methods=['GET', 'POST'])
@@ -134,6 +136,7 @@ def index():
         if code == 200:
             result = ret.json()
             messages = result['statuslist']
+            print(messages)
 
     return render_template('index.html', messages=messages)
 
