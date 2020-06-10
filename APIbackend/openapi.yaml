@@ -121,7 +121,7 @@ definitions:
   StatusList:
     type: object
     properties:
-      statusList:
+      statuslist:
         type: array
         items:
           $ref: "#/definitions/Status"

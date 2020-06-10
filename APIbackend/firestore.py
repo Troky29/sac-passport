@@ -31,9 +31,9 @@ class Firestore(object):
             info_ref.delete()
 
     def get_status(self, filename):
-        staus_ref = db.collection(u'status').document(filename)
-        status = staus_ref.get()
-        if stats.exists:
+        status_ref = db.collection(u'status').document(filename)
+        status = status_ref.get()
+        if status.exists:
             return status.to_dict()['status']
         else:
             return None
@@ -48,7 +48,6 @@ class Firestore(object):
         status = {}
         for cur in status_ref:
             status[cur.id] = cur.to_dict()['status']
-        
         return status
 
     def del_status(self):

@@ -20,7 +20,6 @@ MAX_CONTENT_LENGHT = 20 * 1024 * 1024 #20 MB max image dimension
 ALLOWED_EXTENSIONS = ['jpg', 'png', 'jpeg', 'pdf']
 # basePath = 'https://api-dot-sac-passport-205890.nw.r.appspot.com/api/v1'
 basePath = 'http://127.0.0.1:8080/api/v1'
-MESSAGES = {}
 
 project_id = 'sac-passport-205890'
 topic_name = 'start-operations'
@@ -122,18 +121,21 @@ def upload_multiple():
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    messages = []
     if request.method == 'POST' and 'clear' in request.form:
-        MESSAGES.clear()
         ret = delete(f'{basePath}/passport/status')
-        result = ret.json()
-        code = result.status_code
+        code = ret.status_code
+        if code == 200:
+            messages.clear()
 
     if request.method == 'POST' and 'update' in request.form:
         ret = get(f'{basePath}/passport/status')
-        result = ret.json()
-        code = result.status_code
+        code = ret.status_code
+        if code == 200:
+            result = ret.json()
+            messages = result['statuslist']
 
-    return render_template('index.html', messages=MESSAGES)
+    return render_template('index.html', messages=messages)
 
 @app.route('/render/<filename>/<document>')
 def send_image(filename, document):
