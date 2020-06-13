@@ -27,7 +27,8 @@ class FieldDetection(object):
             'issued by',
             'date of expiry',
             'personal number',
-            'personal no']
+            'personal no',
+            'mother name']
 
         doc_words = []
         doc_lines = []
